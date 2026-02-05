@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>牛哥新春游戏</title>
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body { 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background-color: #3d0000; 
+            font-family: "Microsoft YaHei", sans-serif; 
+            overflow: hidden; 
+            touch-action: none;
+        }
+        
+        #game-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            max-width: 450px; 
+            max-height: 800px; 
+            box-shadow: 0 0 50px #000; 
+            border: 4px solid #ffd700; 
+            background: #8b0000; 
+            overflow: hidden; 
+        }
+        
+        canvas { 
+            display: block; 
+            width: 100% !important;
+            height: 100% !important;
+            background: linear-gradient(to bottom, #7a0000, #b71c1c); 
+        }
+        
+        /* 通用 UI */
+        .overlay { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 50; 
+            color: #ffd700; 
+        }
+        
+        .menu { 
+            background: #8b0000; 
+            padding: 20px; 
+            border: 3px solid #ffd700; 
+            border-radius: 15px; 
+            text-align: center; 
+            width: 85%; 
+            max-width: 320px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
+        }
+        
+        h1 { 
+            font-size: clamp(24px, 6vw, 32px); 
+            margin-bottom: 15px; 
+            text-shadow: 2px 2px #000; 
+            color: #ffd700; 
+        }
+        
+        h2 { 
+            margin: 10px 0; 
+            color: #fff; 
+            font-size: clamp(18px, 4.5vw, 24px);
+        }
+        
+        button { 
+            padding: 12px 20px; 
+            font-size: clamp(16px, 4vw, 18px); 
+            background: linear-gradient(to bottom, #ffd700, #ffca28); 
+            border: 2px solid #b8860b; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin: 10px 5px; 
+            border-radius: 25px; 
+            color: #8b0000; 
+            box-shadow: 0 4px 0 #b8860b; 
+            transition: transform 0.1s; 
+            min-height: 44px; 
+            width: 80%;
+            max-width: 200px;
+        }
+        
+        button:active { 
+            transform: translateY(3px); 
+            box-shadow: 0 1px 0 #b8860b; 
+        }
+        
+        input { 
+            padding: 12px; 
+            font-size: 16px; 
+            width: 70%; 
+            border-radius: 5px; 
+            border: 2px solid #ffd700; 
+            margin-bottom: 15px; 
+            text-align: center; 
+            background: #5d0000; 
+            color: #fff; 
+            min-height: 44px;
+        }
+        
+        .rank-list { 
+            width: 100%; 
+            margin-top: 10px; 
+            border-top: 1px solid #ffd700; 
+        }
+        
+        .rank-item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 8px 0; 
+            border-bottom: 1px dashed rgba(255,215,0,0.3); 
+            font-size: clamp(12px, 3vw, 14px); 
+            color: #fff; 
+        }
+        
+        .rank-item span:first-child { 
+            color: #ffd700; 
+            font-weight: bold; 
+        }
+
+        .red-packet-box { 
+            background: #d32f2f; 
+            border: 4px solid #ffd700; 
+            padding: 20px; 
+            border-radius: 10px; 
+            width: 85%; 
+            max-width: 280px;
+            text-align: center; 
+            animation: popIn 0.3s ease-out; 
+        }
+        
+        .code-display { 
+            background: #fff; 
+            color: #d32f2f; 
+            font-size: clamp(18px, 5vw, 24px); 
+            font-weight: bold; 
+            padding: 10px; 
+            margin: 15px 0; 
+            border-radius: 5px; 
+            border: 2px dashed #d32f2f; 
+            user-select: text; 
+            word-break: break-all;
+        }
+        
+        @keyframes popIn { 
+            from { transform: scale(0.5); opacity: 0; } 
+            to { transform: scale(1); opacity: 1; } 
+        }
+
+        #score-display { 
+            position: absolute; 
+            top: 10px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            font-size: clamp(30px, 8vw, 50px); 
+            color: #ffd700; 
+            text-shadow: 3px 3px 5px #000; 
+            pointer-events: none; 
+            z-index: 10; 
+            font-weight: bold; 
+        }
+        
+        #boss-ui { 
+            position: absolute; 
+            top: 80px; 
+            width: 100%; 
+            text-align: center; 
+            color: #ffeb3b; 
+            font-weight: bold; 
+            display: none; 
+            z-index: 10; 
+            font-size: clamp(16px, 4vw, 20px); 
+            text-shadow: 1px 1px 2px #000; 
+            padding: 0 10px;
+        }
+        
+        #countdown-ui { 
+            position: absolute; 
+            top: 40%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: clamp(40px, 12vw, 80px); 
+            color: #fff; 
+            font-weight: bold; 
+            text-shadow: 0 0 10px #ffd700; 
+            z-index: 60; 
+            display: none; 
+        }
+        
+        /* 加载界面样式 */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #7a0000, #b71c1c);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .loading-title {
+            font-size: clamp(28px, 7vw, 36px);
+            color: #ffd700;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        .loading-progress-container {
+            width: 80%;
+            max-width: 300px;
+            height: 20px;
+            background: #5d0000;
+            border-radius: 10px;
+            border: 2px solid #ffd700;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #ffd700, #ffca28);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+        
+        .loading-text {
+            color: #fff;
+            font-size: clamp(14px, 3.5vw, 16px);
+            margin-top: 10px;
+        }
+        
+        .loading-asset-list {
+            color: #ffcccc;
+            font-size: clamp(12px, 3vw, 14px);
+            margin-top: 20px;
+            text-align: center;
+            max-height: 100px;
+            overflow-y: auto;
+            width: 80%;
+            max-width: 300px;
+        }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 加载界面 -->
+    <div id="loading-screen">
+        <h1 class="loading-title">牛的马年游戏</h1>
+        <div class="loading-progress-container">
+            <div class="loading-progress-bar" id="loading-bar"></div>
+        </div>
+        <div class="loading-text" id="loading-text">正在加载资源 0%</div>
+        <div class="loading-asset-list" id="loading-asset-list"></div>
+    </div>
+    
+    <!-- 游戏界面 -->
+    <div id="score-display">0</div>
+    <div id="boss-ui">🏮 年兽降临 🏮</div>
+    <div id="countdown-ui">3</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="main-menu" class="overlay hidden">
+        <div class="menu">
+            <h1>牛哥助你闯关赢红包</h1>
+            <button onclick="initGame()">走你</button>
+            
+            <div style="margin-top: 20px; text-align: left;">
+                <h3 style="color:#ffd700; border-bottom: 2px solid #ffd700; padding-bottom:5px;">🏆 可给我能耐坏了榜</h3>
+                <div id="start-rank-list" class="rank-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reward-menu" class="overlay hidden">
+        <div class="red-packet-box">
+            <h2>🎉 恭喜闯过第 <span id="level-num">1</span> 关!</h2>
+            <p>每关红包不一样先到先得</p>
+            <p style="font-size: 14px; margin-top:10px; color:#ffcccc;">长按复制下方口令打开支付宝：</p>
+            <div class="code-display" id="red-packet-code">XXXXX</div>
+            <button onclick="continueGame()">我要拿下一关红包</button>
+        </div>
+    </div>
+
+    <div id="over-menu" class="overlay hidden">
+        <div class="menu">
+            <h2 style="color: #ff5252;">说出去笑死个人</h2>
+            <p style="font-size: 18px;">本次得分: <span id="final-score" style="color: #ffd700; font-weight: bold; font-size: 24px;">0</span></p>
+            <div id="name-input-area">
+                <input type="text" id="player-name" placeholder="在这填你的名" maxlength="8">
+                <br>
+                <button onclick="submitScore()">我要进能耐榜</button>
+            </div>
+            <div id="action-buttons" class="hidden">
+                <button onclick="restartGame()">我再来来</button>
+                <button onclick="location.reload()">返回主菜单</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 🎵 音频配置区
+    // ==========================================
+    const AUDIO_FILES = {
+        bgm_menu: 'bgm_menu.mp3',
+        bgm_game: 'bgm_game.mp3',
+        bgm_boss: 'bgm_boss.mp3',
+        sfx_jump: 'sfx_jump.mp3',
+        sfx_shoot: 'sfx_shoot.mp3',
+        sfx_die: 'sfx_die.mp3'
+    };
+
+    // 音频管理器
+    const AUDIO = {};
+    let currentBGM = null; // 当前播放的BGM
+    let audioContextResolved = false; // 音频上下文是否已解锁
+    
+    // 音频播放辅助函数
+    function playSound(name) {
+        if(AUDIO[name]) {
+            AUDIO[name].currentTime = 0;
+            AUDIO[name].play().catch(e => {
+                console.log("音频播放错误:", e);
+                // 如果因为用户交互策略失败，尝试解锁音频
+                if (!audioContextResolved) {
+                    unlockAudio();
+                }
+            });
+        }
+    }
+    
+    // 播放BGM（背景音乐）
+    function playBGM(name) {
+        // 如果已经是当前播放的BGM，不重复播放
+        if (currentBGM === name && AUDIO[name] && !AUDIO[name].paused) {
+            return;
+        }
+        
+        // 先暂停所有BGM
+        ['bgm_menu', 'bgm_game', 'bgm_boss'].forEach(k => {
+            if(AUDIO[k] && AUDIO[k] !== AUDIO[name]) {
+                AUDIO[k].pause();
+                AUDIO[k].currentTime = 0;
+            }
+        });
+        
+        // 播放指定的BGM
+        if(AUDIO[name]) {
+            AUDIO[name].loop = true;
+            AUDIO[name].volume = 0.6;
+            currentBGM = name;
+            
+            // 尝试播放，如果失败则解锁音频上下文
+            AUDIO[name].play().then(() => {
+                audioContextResolved = true;
+                console.log(`开始播放BGM: ${name}`);
+            }).catch(e => {
+                console.log("BGM播放失败，需要用户交互:", e);
+                // 记录需要播放的BGM，等待用户交互
+                pendingBGM = name;
+            });
+        }
+    }
+    
+    // 解锁音频上下文（用户交互后调用）
+    function unlockAudio() {
+        if (audioContextResolved) return;
+        
+        // 创建一个短暂的音频来解锁音频上下文
+        const unlockSound = new Audio();
+        unlockSound.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ';
+        unlockSound.volume = 0;
+        
+        unlockSound.play().then(() => {
+            audioContextResolved = true;
+            unlockSound.pause();
+            unlockSound.currentTime = 0;
+            
+            console.log("音频上下文已解锁");
+            
+            // 如果有待播放的BGM，现在播放它
+            if (pendingBGM && AUDIO[pendingBGM]) {
+                playBGM(pendingBGM);
+                pendingBGM = null;
+            }
+        }).catch(e => {
+            console.log("音频解锁失败:", e);
+        });
+    }
+    
+    // 用户交互时解锁音频
+    function handleUserInteraction() {
+        if (!audioContextResolved) {
+            unlockAudio();
+        }
+    }
+    
+    let pendingBGM = null; // 等待播放的BGM
+    
+    // ==========================================
+    // 📦 资源加载管理
+    // ==========================================
+    const RESOURCES = {
+        images: {
+            horse: 'horse.png',
+            boss: 'boss.png',
+            bullet: 'bullet.png'
+        },
+        audio: AUDIO_FILES
+    };
+    
+    let loadedResources = 0;
+    let totalResources = 0;
+    
+    function initResources() {
+        // 计算总资源数
+        totalResources = Object.keys(RESOURCES.images).length + Object.keys(RESOURCES.audio).length;
+        
+        // 显示资源列表
+        const assetList = document.getElementById('loading-asset-list');
+        let html = '<div>正在加载资源:</div>';
+        
+        // 加载图片资源
+        for (const [key, src] of Object.entries(RESOURCES.images)) {
+            html += `<div>📷 ${key}.png...</div>`;
+            const img = new Image();
+            img.onload = () => updateProgress(key, 'image');
+            img.onerror = () => updateProgress(key, 'image', true);
+            img.src = src;
+            ASSETS[key].img = img;
+        }
+        
+        // 加载音频资源
+        for (const [key, src] of Object.entries(RESOURCES.audio)) {
+            html += `<div>🎵 ${key}...</div>`;
+            const audio = new Audio();
+            audio.preload = 'auto';
+            
+            // 添加多个事件监听确保加载完成
+            let loaded = false;
+            const onLoad = () => {
+                if (!loaded) {
+                    loaded = true;
+                    updateProgress(key, 'audio');
+                }
+            };
+            
+            audio.addEventListener('canplaythrough', onLoad);
+            audio.addEventListener('loadeddata', onLoad);
+            audio.addEventListener('error', () => {
+                if (!loaded) {
+                    loaded = true;
+                    updateProgress(key, 'audio', true);
+                }
+            });
+            
+            // 设置音频属性
+            audio.loop = (key.startsWith('bgm_'));
+            audio.volume = 0.6;
+            audio.src = src;
+            
+            AUDIO[key] = audio;
+        }
+        
+        assetList.innerHTML = html;
+        
+        // 为了确保音频能加载，我们可以尝试预加载
+        setTimeout(() => {
+            // 如果有些音频还没触发加载事件，强制更新进度
+            for (const key in RESOURCES.audio) {
+                if (AUDIO[key] && AUDIO[key].readyState >= 2) {
+                    // 检查是否已经更新过进度
+                    const items = assetList.querySelectorAll('div');
+                    let found = false;
+                    items.forEach(item => {
+                        if (item.textContent.includes(key) && !item.textContent.includes('✅') && !item.textContent.includes('❌')) {
+                            found = true;
+                        }
+                    });
+                    if (found) {
+                        updateProgress(key, 'audio');
+                    }
+                }
+            }
+        }, 2000);
+    }
+    
+    function updateProgress(name, type, isError = false) {
+        loadedResources++;
+        const progress = Math.floor((loadedResources / totalResources) * 100);
+        
+        // 更新进度条
+        const progressBar = document.getElementById('loading-bar');
+        progressBar.style.width = progress + '%';
+        
+        // 更新进度文本
+        const progressText = document.getElementById('loading-text');
+        if (isError) {
+            progressText.innerHTML = `${name} 加载失败，继续加载... (${progress}%)`;
+        } else {
+            progressText.innerHTML = `正在加载资源 ${progress}%`;
+        }
+        
+        // 更新资源列表中的状态
+        const assetList = document.getElementById('loading-asset-list');
+        const items = assetList.querySelectorAll('div');
+        items.forEach(item => {
+            if (item.textContent.includes(name)) {
+                if (isError) {
+                    item.innerHTML = item.innerHTML.replace('...', ' ❌ 加载失败');
+                } else if (!item.innerHTML.includes('✅') && !item.innerHTML.includes('❌')) {
+                    item.innerHTML = item.innerHTML.replace('...', ' ✅ 已加载');
+                }
+            }
+        });
+        
+        // 所有资源加载完成
+        if (loadedResources >= totalResources) {
+            setTimeout(() => {
+                showMainMenu();
+                // 自动播放主菜单音乐
+                playBGM('bgm_menu');
+            }, 500);
+        }
+    }
+    
+    function showMainMenu() {
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('main-menu').classList.remove('hidden');
+        renderStartLeaderboard();
+        
+        // 添加用户交互监听器来解锁音频
+        const menuButton = document.querySelector('#main-menu button');
+        if (menuButton) {
+            menuButton.addEventListener('click', handleUserInteraction);
+        }
+    }
+    
+    // ==========================================
+    // 🧧 红包配置区
+    // ==========================================
+    const RED_PACKETS = [
+        "马年大吉888", "财源广进666", "步步高升2026", "万事如意999", "恭喜发财520"
+    ];
+
+    // ==========================================
+    // 🎮 游戏核心逻辑
+    // ==========================================
+    const ASSETS = {
+        horse: { img: null, emoji: '🐎' },
+        boss:  { img: null, emoji: '👹' },
+        bullet:{ img: null, emoji: '🧨' }
+    };
+    
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 动态设置画布尺寸
+    function resizeCanvas() {
+        const container = document.getElementById('game-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // 根据新的尺寸调整游戏参数
+        adjustGameParams();
+    }
+    
+    // 根据屏幕尺寸调整游戏参数
+    function adjustGameParams() {
+        const baseWidth = 400;
+        const baseHeight = 600;
+        const scaleX = canvas.width / baseWidth;
+        const scaleY = canvas.height / baseHeight;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // 保存缩放比例
+        gameScale = scale;
+        gameOffsetX = (canvas.width - baseWidth * scale) / 2;
+        gameOffsetY = (canvas.height - baseHeight * scale) / 2;
+    }
+    
+    // 绘制缩放后的游戏
+    function drawScaled() {
+        ctx.save();
+        ctx.translate(gameOffsetX, gameOffsetY);
+        ctx.scale(gameScale, gameScale);
+        
+        // 绘制游戏背景
+        ctx.fillStyle = "#8b0000";
+        ctx.fillRect(0, 0, 400, 600);
+        
+        // 绘制渐变背景
+        const gradient = ctx.createLinearGradient(0, 0, 0, 600);
+        gradient.addColorStop(0, "#7a0000");
+        gradient.addColorStop(1, "#b71c1c");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 400, 600);
+        
+        // 绘制管道 - 修复问题：确保每个管道都是独立的
+        ctx.fillStyle = "#ffd700";
+        pipes.forEach(p => {
+            // 绘制上管道
+            ctx.fillRect(p.x, 0, p.w, p.top);
+            // 绘制下管道 - 修复：确保从正确的位置开始绘制
+            const bottomY = p.top + config.pipeGap;
+            const bottomHeight = 600 - bottomY;
+            ctx.fillRect(p.x, bottomY, p.w, bottomHeight);
+        });
+        
+        if (gameState === 'BOSS') {
+            // 绘制BOSS
+            if (ASSETS.boss.img && ASSETS.boss.img.complete && ASSETS.boss.img.naturalWidth > 0) {
+                ctx.drawImage(ASSETS.boss.img, 300, bossY, 100, 100);
+            } else {
+                ctx.font = "80px Arial"; 
+                ctx.fillText(ASSETS.boss.emoji, 310, bossY + 70);
+            }
+        }
+        
+        // 绘制子弹
+        bullets.forEach(b => {
+            if (ASSETS.bullet.img && ASSETS.bullet.img.complete && ASSETS.bullet.img.naturalWidth > 0) {
+                ctx.drawImage(ASSETS.bullet.img, b.x, b.y, b.w, b.h);
+            } else {
+                ctx.font = "30px Arial"; 
+                ctx.fillText(ASSETS.bullet.emoji, b.x, b.y + 20);
+            }
+        });
+        
+        // 绘制马
+        ctx.save();
+        ctx.translate(horse.x + horse.w/2, horse.y + horse.h/2);
+        if (gameState === 'PLAYING' || gameState === 'BOSS') {
+            ctx.rotate(Math.min(Math.PI/6, Math.max(-Math.PI/6, horse.v * 0.1)));
+        }
+        if (ASSETS.horse.img && ASSETS.horse.img.complete && ASSETS.horse.img.naturalWidth > 0) {
+            ctx.drawImage(ASSETS.horse.img, -horse.w/2, -horse.h/2, horse.w, horse.h);
+        } else {
+            ctx.font = "45px Arial"; 
+            ctx.fillText(ASSETS.horse.emoji, -25, 15);
+        }
+        ctx.restore();
+        
+        ctx.restore();
+    }
+    
+    // 初始化配置
+    const config = {
+        gravity: 0.14, 
+        jump: -4.0, 
+        pipeSpeed: 1.3, 
+        pipeSpawnRate: 250, 
+        pipeGap: 220,
+        bossDuration: 20000, 
+        bossSafeTime: 3000, 
+        waveInterval: 3000, 
+        bulletGap: 200, 
+        bulletSpeed: 2.5
+    };
+    
+    let horse, pipes, bullets, score, gameActive = false;
+    let gameState = 'IDLE'; 
+    let bossY = 250, bossDir = 1, lastBossScore = -1;
+    let bossStartTime = 0, lastWaveTime = 0, nextBulletTime = 0;
+    let bulletQueue = 0;
+    let countdownVal = 3;
+    let gameScale = 1;
+    let gameOffsetX = 0, gameOffsetY = 0;
+    
+    // 页面加载完成后初始化资源
+    window.addEventListener('load', () => {
+        resizeCanvas();
+        initResources();
+        
+        // 添加全局用户交互监听（触摸和点击）
+        document.addEventListener('click', handleUserInteraction);
+        document.addEventListener('touchstart', handleUserInteraction);
+    });
+    
+    // 窗口大小调整
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
+    
+    function handleAction(e) {
+        if (e) e.preventDefault();
+        if (gameActive && (gameState === 'PLAYING' || gameState === 'BOSS')) {
+            horse.v = config.jump;
+            playSound('sfx_jump');
+        }
+        
+        // 确保音频上下文已解锁
+        handleUserInteraction();
+    }
+    
+    // 事件监听
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'Space' || e.code === 'ArrowUp') handleAction(e); 
+    });
+    
+    canvas.addEventListener('mousedown', handleAction);
+    canvas.addEventListener('touchstart', function(e) {
+        handleAction(e);
+        e.preventDefault();
+        e.stopPropagation();
+    }, { passive: false });
+    
+    // 防止页面滚动
+    document.addEventListener('touchmove', function(e) {
+        if(gameActive) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // 游戏初始化
+    function initGame() {
+        // 设置游戏初始状态
+        horse = { x: 80, y: 300, v: 0, w: 50, h: 40 };
+        pipes = []; 
+        bullets = []; 
+        score = 0; 
+        lastBossScore = -1; 
+        bulletQueue = 0;
+        
+        gameActive = true;
+        gameState = 'PLAYING';
+        
+        playBGM('bgm_game');
+        
+        document.getElementById('score-display').innerText = '0';
+        document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
+        document.getElementById('boss-ui').style.display = 'none';
+        
+        // 开始游戏循环
+        gameLoop();
+    }
+    
+    function restartGame() {
+        initGame();
+    }
+    
+    // 游戏主循环
+    function gameLoop() {
+        if (!gameActive) return;
+        
+        update();
+        drawScaled();
+        
+        requestAnimationFrame(gameLoop);
+    }
+    
+    function update() {
+        if (!gameActive) return;
+        
+        // 更新马的位置
+        if (gameState === 'PLAYING' || gameState === 'BOSS') {
+            horse.v += config.gravity;
+            horse.y += horse.v;
+            
+            // 边界检测
+            if (horse.y > 560 || horse.y < -50) {
+                gameOver();
+                return;
+            }
+        }
+        
+        if (gameState === 'PLAYING') {
+            updateNormal();
+        } else if (gameState === 'BOSS') {
+            updateBoss();
+        }
+    }
+    
+    function updateNormal() {
+        // 生成新管道 - 修复管道生成逻辑
+        const lastPipe = pipes[pipes.length - 1];
+        
+        // 只有当管道足够远时才生成新的
+        if (!lastPipe || lastPipe.x < (400 - config.pipeSpawnRate)) {
+            // 随机生成管道高度，确保不会连在一起
+            let topHeight;
+            if (pipes.length === 0) {
+                topHeight = Math.random() * 200 + 100;
+            } else {
+                // 基于上一个管道的位置生成新的管道位置
+                const lastTop = pipes[pipes.length - 1].top;
+                const minDistance = 50; // 最小垂直距离
+                
+                // 确保新管道与上一个管道有足够的垂直距离
+                do {
+                    topHeight = Math.random() * 200 + 100;
+                } while (Math.abs(topHeight - lastTop) < minDistance);
+            }
+            
+            pipes.push({ 
+                x: 400, 
+                top: topHeight, 
+                w: 60, 
+                passed: false 
+            });
+        }
+        
+        // 更新管道位置
+        for (let i = pipes.length - 1; i >= 0; i--) {
+            pipes[i].x -= config.pipeSpeed;
+            
+            // 碰撞检测
+            if (horse.x + 8 < pipes[i].x + pipes[i].w &&
+                horse.x + horse.w - 8 > pipes[i].x &&
+                (horse.y + 8 < pipes[i].top || horse.y + horse.h - 8 > pipes[i].top + config.pipeGap)) {
+                gameOver();
+                return;
+            }
+            
+            // 得分
+            if (!pipes[i].passed && horse.x > pipes[i].x + pipes[i].w) {
+                score++;
+                document.getElementById('score-display').innerText = score;
+                pipes[i].passed = true;
+                
+                // 每10分触发BOSS战
+                if (score > 0 && score % 10 === 0 && score !== lastBossScore) {
+                    startBossBattle();
+                    lastBossScore = score;
+                    return;
+                }
+            }
+            
+            // 移除屏幕外的管道
+            if (pipes[i].x < -80) pipes.splice(i, 1);
+        }
+    }
+    
+    function startBossBattle() {
+        gameState = 'BOSS';
+        bossStartTime = Date.now();
+        lastWaveTime = bossStartTime; 
+        bulletQueue = 0;
+        pipes = [];
+        
+        playBGM('bgm_boss');
+        document.getElementById('boss-ui').style.display = 'block';
+    }
+    
+    function updateBoss() {
+        const now = Date.now();
+        const elapsed = now - bossStartTime;
+        const remaining = Math.max(0, config.bossDuration - elapsed);
+        
+        // 更新BOSS位置
+        bossY += bossDir * 2.5;
+        if (bossY > 440 || bossY < 60) bossDir *= -1;
+        
+        // 显示BOSS战UI
+        if (elapsed < config.bossSafeTime) {
+            document.getElementById('boss-ui').innerText = `🏮 年兽降临！准备... ${Math.ceil((config.bossSafeTime - elapsed)/1000)}s`;
+        } else {
+            const currentLevel = Math.floor(score / 10);
+            document.getElementById('boss-ui').innerText = `🏮 躲避攻击(${currentLevel}连发)：${Math.ceil(remaining/1000)}s`;
+            
+            // 生成子弹波
+            if (elapsed > config.bossSafeTime && 
+                now - lastWaveTime > config.waveInterval && 
+                bulletQueue === 0 && 
+                remaining > 2000) {
+                bulletQueue = currentLevel;
+                lastWaveTime = now;
+            }
+            
+            // 发射子弹
+            if (bulletQueue > 0 && now > nextBulletTime) {
+                bullets.push({ 
+                    x: 350, 
+                    y: bossY + 25, 
+                    w: 30, 
+                    h: 20 
+                });
+                playSound('sfx_shoot');
+                bulletQueue--;
+                nextBulletTime = now + config.bulletGap;
+            }
+        }
+        
+        // 更新子弹位置和碰撞检测
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].x -= config.bulletSpeed;
+            
+            // 碰撞检测
+            if (checkRectCollision(horse, bullets[i])) {
+                gameOver();
+                return;
+            }
+            
+            // 移除屏幕外的子弹
+            if (bullets[i].x < -50) bullets.splice(i, 1);
+        }
+        
+        // BOSS战结束
+        if (remaining <= 0) {
+            showReward();
+        }
+    }
+    
+    function showReward() {
+        gameState = 'REWARD';
+        bullets = [];
+        playBGM('bgm_menu');
+        document.getElementById('boss-ui').style.display = 'none';
+        
+        const level = Math.floor(score / 10);
+        const code = RED_PACKETS[level - 1] || "恭喜发财2026";
+        
+        document.getElementById('level-num').innerText = level;
+        document.getElementById('red-packet-code').innerText = code;
+        document.getElementById('reward-menu').classList.remove('hidden');
+    }
+    
+    function continueGame() {
+        document.getElementById('reward-menu').classList.add('hidden');
+        startCountdown();
+    }
+    
+    function startCountdown() {
+        gameState = 'COUNTDOWN';
+        countdownVal = 3;
+        const countUI = document.getElementById('countdown-ui');
+        countUI.innerText = countdownVal;
+        countUI.style.display = 'block';
+        
+        const timer = setInterval(() => {
+            countdownVal--;
+            if (countdownVal > 0) {
+                countUI.innerText = countdownVal;
+            } else {
+                clearInterval(timer);
+                countUI.style.display = 'none';
+                gameState = 'PLAYING';
+                playBGM('bgm_game');
+            }
+        }, 1000);
+    }
+    
+    function checkRectCollision(r1, r2) {
+        const p = 8; // 碰撞容差
+        return r1.x + p < r2.x + r2.w && 
+               r1.x + r1.w - p > r2.x &&
+               r1.y + p < r2.y + r2.h && 
+               r1.y + r1.h - p > r2.y;
+    }
+    
+    function gameOver() {
+        gameActive = false;
+        
+        playSound('sfx_die');
+        ['bgm_game', 'bgm_boss'].forEach(k => {
+            if(AUDIO[k]) AUDIO[k].pause();
+        });
+        
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('boss-ui').style.display = 'none';
+        document.getElementById('countdown-ui').style.display = 'none';
+        
+        // 显示游戏结束菜单
+        document.getElementById('over-menu').classList.remove('hidden');
+        
+        // 重置输入状态
+        document.getElementById('name-input-area').classList.remove('hidden');
+        document.getElementById('action-buttons').classList.add('hidden');
+        document.getElementById('player-name').value = '';
+    }
+    
+    function submitScore() {
+        const name = document.getElementById('player-name').value.trim() || "无名英雄";
+        let board = JSON.parse(localStorage.getItem('horseRanking') || "[]");
+        board.push({ name, score });
+        board.sort((a, b) => b.score - a.score);
+        board = board.slice(0, 5);
+        localStorage.setItem('horseRanking', JSON.stringify(board));
+        
+        document.getElementById('name-input-area').classList.add('hidden');
+        document.getElementById('action-buttons').classList.remove('hidden');
+    }
+    
+    function renderStartLeaderboard() {
+        const board = JSON.parse(localStorage.getItem('horseRanking') || "[]");
+        const listEl = document.getElementById('start-rank-list');
+        
+        if (board.length === 0) {
+            listEl.innerHTML = '<div class="rank-item" style="justify-content:center; color:#ccc;">暂无记录，等你来战！</div>';
+            return;
+        }
+        
+        let html = '';
+        board.forEach((item, index) => {
+            let icon = index === 0 ? '🥇' : 
+                      (index === 1 ? '🥈' : 
+                      (index === 2 ? '🥉' : `${index + 1}.`));
+            html += `
+                <div class="rank-item">
+                    <span>${icon} ${item.name}</span>
+                    <span>${item.score}分</span>
+                </div>`;
+        });
+        listEl.innerHTML = html;
+    }
+</script>
+</body>
+</html>
